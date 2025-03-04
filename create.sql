@@ -54,3 +54,15 @@ CREATE TABLE sales (
     FOREIGN KEY (client_id) REFERENCES clients(client_id),
     FOREIGN KEY (warehouse_id) REFERENCES warehouses(warehouse_id)
 );
+
+CREATE TABLE transfers (
+    transfer_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    product_id INTEGER NOT NULL,
+    source_warehouse_id INTEGER NOT NULL,
+    destination_warehouse_id INTEGER NOT NULL,
+    quantity INTEGER NOT NULL,
+    transfer_date DATE NOT NULL,
+    FOREIGN KEY (product_id) REFERENCES products(product_id),
+    FOREIGN KEY (source_warehouse_id) REFERENCES warehouses(warehouse_id),
+    FOREIGN KEY (destination_warehouse_id) REFERENCES warehouses(warehouse_id)
+);
