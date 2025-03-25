@@ -27,14 +27,14 @@ FROM warehouses w
 JOIN products p ON p.quantity_available > 0
 ORDER BY w.location, p.name;
 
-/* Перемещение товара между скалдами за последние 30 дней */
+/* Перемещение товара между складами за последние 1000 дней */
 SELECT t.transfer_id, p.name AS product, w1.location AS from_warehouse,
        w2.location AS to_warehouse, t.quantity, t.transfer_date
 FROM transfers t
 JOIN products p ON t.product_id = p.product_id
 JOIN warehouses w1 ON t.source_warehouse_id = w1.warehouse_id
 JOIN warehouses w2 ON t.destination_warehouse_id = w2.warehouse_id
-WHERE t.transfer_date >= DATE('now', '-30 days')
+WHERE t.transfer_date >= DATE('now', '-1000 days')
 ORDER BY t.transfer_date DESC;
 
 /* Список клиентов, которые купили товары на сумму более 100000 */
