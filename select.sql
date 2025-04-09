@@ -67,4 +67,55 @@ JOIN warehouses w ON s.warehouse_id = w.warehouse_id
 GROUP BY w.warehouse_id
 ORDER BY total_sold DESC;
 
+/* Средний дневной объем продаж каждого склада, % от общего объема продаж в каждом квартале */
+-- Деление продаж по кварталам каждого года
+WITH sales_with_quarter AS (
+    SELECT
+        warehouse_id,
+        STRFTIME('%Y', sale_date) AS year,
+        CASE
+            WHEN CAST(STRFTIME('%m', sale_date) AS INTEGER) BETWEEN 1 AND 3 THEN 1
+            WHEN CAST(STRFTIME('%m', sale_date) AS INTEGER) BETWEEN 4 AND 6 THEN 2
+            WHEN CAST(STRFTIME('%m', sale_date) AS INTEGER) BETWEEN 7 AND 9 THEN 3
+            WHEN CAST(STRFTIME('%m', sale_date) AS INTEGER) BETWEEN 10 AND 12 THEN 4
+        END AS quarter,
+        sale_date,
+        quantity
+    FROM sales
+),
+
+-- Подсчет продаж по складам и кварталам
+sales_aggregated AS (
+    SELECT
+        warehouse_id,
+        year,
+        quarter,
+        SUM(quantity) AS total_quantity,
+        COUNT(DISTINCT sale_date) AS active_days
+    FROM sales_with_quarter
+    GROUP BY warehouse_id, year, quarter
+),
+
+-- Подсчет общего оборота всех складов по кварталам
+total_by_quarter AS (
+    SELECT
+        year,
+        quarter,
+        SUM(total_quantity) AS total_all_warehouses
+    FROM sales_aggregated
+    GROUP BY year, quarter
+)
+
+-- Объединение результатов
+SELECT
+    s.warehouse_id,
+    s.year || '-Q' || s.quarter AS quarter_label,
+    ROUND(1.0 * s.total_quantity / s.active_days, 2) AS avg_daily_turnover,
+    ROUND(100.0 * s.total_quantity / t.total_all_warehouses, 2) AS percentage_of_total
+FROM sales_aggregated s
+JOIN total_by_quarter t
+  ON s.year = t.year AND s.quarter = t.quarter
+ORDER BY s.year, s.quarter, s.warehouse_id;
+
+
 
