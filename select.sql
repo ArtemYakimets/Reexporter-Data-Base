@@ -118,4 +118,126 @@ JOIN total_by_quarter t
 ORDER BY s.year, s.quarter, s.warehouse_id;
 
 
+/* Найти для каждого клиента список всех товаров, которые он покупал,
+   с указанием общего количества и общей суммы по каждому товару. */
+SELECT
+    c.client_id AS customer_id,
+    c.name AS customer_name,
+    p.name AS product_name,
+    SUM(s.quantity) AS total_quantity,
+    SUM(s.quantity * s.sale_price) AS total_spent
+FROM
+    sales s
+JOIN
+    clients c ON s.client_id = c.client_id
+JOIN
+    products p ON s.product_id = p.product_id
+GROUP BY
+    c.client_id, p.product_id;
+
+
+/* Найти товар(ы) с наибольшим объемом продаж за всё время (по количеству штук). */
+SELECT
+    p.product_id,
+    p.name,
+    SUM(s.quantity) AS total_sold
+FROM
+    products p
+JOIN
+    sales s ON p.product_id = s.product_id
+GROUP BY
+    p.product_id
+ORDER BY
+    total_sold DESC
+LIMIT 1;
+
+/* Определить, какие клиенты заказывали товары на сумму более 100000, и отсортировать их по убыванию затрат. */
+SELECT
+    c.client_id,
+    c.name,
+    SUM(s.quantity * s.sale_price) AS total_spent
+FROM
+    clients c
+JOIN
+    sales s ON c.client_id = s.client_id
+GROUP BY
+    c.client_id
+HAVING
+    total_spent > 100000
+ORDER BY
+    total_spent DESC;
+
+/* Найти поставщиков, у которых больше всего уникальных товаров. */
+SELECT
+    s.supplier_id,
+    s.name,
+    COUNT(DISTINCT p.product_id) AS product_count
+FROM
+    suppliers s
+JOIN
+    purchases p ON s.supplier_id = p.supplier_id
+GROUP BY
+    s.supplier_id
+ORDER BY
+    product_count DESC
+LIMIT 1;
+
+/* Для каждого товара показать количество продаж (в заказах), даже если товар не продавался ни разу. */
+SELECT
+    p.product_id,
+    p.name,
+    COALESCE(SUM(s.quantity), 0) AS total_sold
+FROM
+    products p
+LEFT JOIN
+    sales s ON p.product_id = s.product_id
+GROUP BY
+    p.product_id;
+
+/* Вывести среднюю цену продажи для каждого товара (по всем заказам). */
+SELECT
+    p.product_id,
+    p.name,
+    ROUND(AVG(s.sale_price), 2) AS avg_price
+FROM
+    products p
+JOIN
+    sales s ON p.product_id = s.product_id
+GROUP BY
+    p.product_id;
+
+/* Найти кварталы, в которых были продажи, и количество заказов в каждом. */
+SELECT
+    STRFTIME('%Y-Q' || ((CAST(STRFTIME('%m', s.sale_date) AS INTEGER) - 1) / 3 + 1), s.sale_date) AS quarter,
+    COUNT(DISTINCT s.sale_id) AS order_count
+FROM
+    sales s
+GROUP BY
+    quarter
+ORDER BY
+    quarter;
+
+/* Определить, какие товары чаще всего перемещаются между складами, с указанием общего количества перемещений и перемещённого объёма. */
+SELECT
+    p.product_id AS product_id,
+    p.name AS product_name,
+    COUNT(t.transfer_id) AS movement_count,
+    SUM(t.quantity) AS total_quantity_moved
+FROM
+    transfers t
+JOIN
+    products p ON t.product_id = p.product_id
+GROUP BY
+    p.product_id
+ORDER BY
+    total_quantity_moved DESC;
+
+
+
+
+
+
+
+
+
 
